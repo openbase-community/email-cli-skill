@@ -1,0 +1,15 @@
+{
+  "template": "https://github.com/openbase-community/templates.git#skills",
+  "template_commit": "e303c8ea29f7f19c6beddd71dec3e361acfb11a0",
+  "name_snake": "gmail_cli",
+  "name_pretty": "Gmail CLI",
+  "variables": {
+    "name_snake": "gmail_cli",
+    "name_pretty": "Gmail CLI",
+    "repo_name_kebab": "gmail-cli-skill",
+    "repo_name_pretty": "Gmail CLI Skill",
+    "author_github_name": "gabemontague",
+    "skill_description": "Use the local Gmail CLI for safe Gmail search, reading, approved-sender management, draft creation, and draft sending with Openbase Coder approval gates.",
+    "skill_trigger_summary": "Gmail CLI workflows, Gmail search or reading, Gmail approved senders, Gmail draft creation, or Gmail draft sending through the local CLI"
+  }
+}

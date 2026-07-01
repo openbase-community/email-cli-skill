@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gmail-cli-skill"
+version = "0.1.0"
+description = "A local Gmail CLI and agent skill with explicit approval gates for sensitive Gmail actions."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Gmail CLI Skill Maintainers" }]
+dependencies = [
+  "beautifulsoup4>=4.12.3",
+  "google-api-python-client>=2.150.0",
+  "google-auth>=2.35.0",
+  "google-auth-oauthlib>=1.2.1",
+]
+
+[project.urls]
+Repository = "https://github.com/montaguegabe/gmail-cli-skill"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.0",
+  "ruff>=0.8.0",
+]
+
+[project.scripts]
+gmail-cli = "gmail_cli.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gmail_cli"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

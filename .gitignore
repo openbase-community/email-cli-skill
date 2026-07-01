@@ -1,1 +1,16 @@
 .DS_Store
+.pytest_cache/
+.ruff_cache/
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+credentials.json
+token.json
+approved_senders.json
+client_secret*.json
+*.pem
+*.key
+*.p12
+*.pfx

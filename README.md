@@ -6,6 +6,17 @@ The CLI is `gmail-cli`. It supports Gmail OAuth setup, search, label listing, me
 reading, approved-sender management, draft creation, and draft sending. Sensitive operations create
 an approval request and refuse to run until the user approves the exact action.
 
+## Why a Custom CLI/Skill
+
+Gmail is high-sensitivity infrastructure: message bodies, drafts, recipient lists, and send actions
+all need stronger boundaries than a broad always-on MCP surface. This skill keeps the agent contract
+small and auditable by exposing explicit JSON CLI commands, using the minimum OAuth scopes needed for
+the requested operation, stripping body-like fields from search results, and requiring approved
+senders before message bodies can be read. Draft creation, draft sending, and approved-sender changes
+stay behind an explicit approval gate.
+
+GitHub collaborator: `@natea`.
+
 ## Quick Start
 
 ```bash

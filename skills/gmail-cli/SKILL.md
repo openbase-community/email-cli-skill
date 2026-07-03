@@ -87,6 +87,12 @@ gmail-cli send-draft DRAFT_ID
 
 These commands also require approval from the Openbase Coder approvals dashboard before rerunning.
 
+Reply drafts must preserve the email trail by default. Use `gmail-cli draft-reply` for replies
+instead of creating a new draft manually; it keeps the Gmail `threadId`, sets reply headers, and
+appends the visible quoted history to the draft body unless `--no-quoted-history` is explicitly
+passed. After creating a reply draft, verify that the returned `thread_id` matches the intended
+thread and mention to the user that the visible trail was included.
+
 ## Openbase Coder Approval Contract
 
 The CLI does not perform a sensitive action when approval is missing. It exits with code `2` and

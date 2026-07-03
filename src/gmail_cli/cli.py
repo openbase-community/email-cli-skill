@@ -121,6 +121,11 @@ def build_parser() -> argparse.ArgumentParser:
     draft_reply.add_argument("--body", help="Draft body text")
     draft_reply.add_argument("--body-file", type=Path, help="Read draft body text from a file")
     draft_reply.add_argument("--reply-all", action="store_true")
+    draft_reply.add_argument(
+        "--no-quoted-history",
+        action="store_true",
+        help="Do not append the visible quoted email trail to the reply body",
+    )
     add_approval_argument(draft_reply)
 
     send = subparsers.add_parser("send-draft", help="Send an existing Gmail draft")
@@ -211,6 +216,7 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
                 "account": args.account or "default",
                 "thread_id": args.thread_id,
                 "reply_all": args.reply_all,
+                "include_quoted_history": not args.no_quoted_history,
                 "body_preview": body_text[:500],
             },
         )
@@ -218,6 +224,7 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
             thread_id=args.thread_id,
             body_text=body_text,
             reply_all=args.reply_all,
+            include_quoted_history=not args.no_quoted_history,
             confirm_create=True,
         )
     if args.command == "send-draft":

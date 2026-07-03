@@ -201,6 +201,7 @@ class GmailClient:
         thread_id: str,
         body_text: str,
         reply_all: bool = False,
+        include_quoted_history: bool = True,
         confirm_create: bool = False,
     ) -> dict[str, Any]:
         require_confirmation(confirm_create, "Draft reply creation")
@@ -219,12 +220,19 @@ class GmailClient:
         messages = thread.get("messages") or []
         if not messages:
             raise RuntimeError(f"Thread {thread_id} did not contain any messages.")
+        original_message = messages[-1]
+        if include_quoted_history:
+            original_message = self._get_message(
+                message_id=original_message["id"],
+                message_format="full",
+            )
         profile = self.service.users().getProfile(userId=self.user_id).execute()
         message = build_reply_message(
             sender=profile["emailAddress"],
-            original_message=messages[-1],
+            original_message=original_message,
             body_text=body_text,
             reply_all=reply_all,
+            include_quoted_history=include_quoted_history,
         )
         response = (
             self.service.users()

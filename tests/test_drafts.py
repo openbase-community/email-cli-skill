@@ -16,8 +16,8 @@ def original_message() -> dict[str, object]:
         "payload": {
             "mimeType": "text/plain",
             "headers": [
-                {"name": "From", "value": "Lauren Katz <lauren@example.com>"},
-                {"name": "To", "value": "Gabe Montague <gabe@example.com>"},
+                {"name": "From", "value": "Jordan Lee <jordan@example.com>"},
+                {"name": "To", "value": "Casey Morgan <casey@example.com>"},
                 {"name": "Cc", "value": "Jesse <jesse@example.com>"},
                 {"name": "Subject", "value": "Time to Connect"},
                 {"name": "Date", "value": "Thu, 2 Jul 2026 12:45:07 -0700"},
@@ -25,7 +25,7 @@ def original_message() -> dict[str, object]:
                 {"name": "References", "value": "<root@example.com>"},
             ],
             "body": {
-                "data": b64("Hi Gabe,\n\nHere are a few times that work.\n\nBest,\nLauren"),
+                "data": b64("Hi Casey,\n\nHere are a few times that work.\n\nBest,\nJordan"),
             },
         },
     }
@@ -33,9 +33,9 @@ def original_message() -> dict[str, object]:
 
 def test_build_reply_message_preserves_headers_and_visible_trail() -> None:
     message = build_reply_message(
-        sender="gabe@example.com",
+        sender="casey@example.com",
         original_message=original_message(),
-        body_text="Thursday works well for me.\n\nBest,\nGabe",
+        body_text="Thursday works well for me.\n\nBest,\nCasey",
         reply_all=True,
     )
 
@@ -43,17 +43,17 @@ def test_build_reply_message_preserves_headers_and_visible_trail() -> None:
     assert message["Subject"] == "Re: Time to Connect"
     assert message["In-Reply-To"] == "<original@example.com>"
     assert message["References"] == "<root@example.com> <original@example.com>"
-    assert "Lauren Katz <lauren@example.com>" in message["To"]
+    assert "Jordan Lee <jordan@example.com>" in message["To"]
     assert "Jesse <jesse@example.com>" in message["Cc"]
     assert "Thursday works well for me." in body
-    assert "On Thu, 2 Jul 2026 12:45:07 -0700 Lauren Katz <lauren@example.com> wrote:" in body
-    assert "> Hi Gabe," in body
+    assert "On Thu, 2 Jul 2026 12:45:07 -0700 Jordan Lee <jordan@example.com> wrote:" in body
+    assert "> Hi Casey," in body
     assert "> Here are a few times that work." in body
 
 
 def test_build_reply_message_can_skip_visible_trail() -> None:
     message = build_reply_message(
-        sender="gabe@example.com",
+        sender="casey@example.com",
         original_message=original_message(),
         body_text="Thursday works well for me.",
         include_quoted_history=False,

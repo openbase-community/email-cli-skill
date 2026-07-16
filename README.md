@@ -15,8 +15,6 @@ the requested operation, stripping body-like fields from search results, and req
 senders before message bodies can be read. Draft creation, draft sending, and approved-sender changes
 stay behind an explicit approval gate.
 
-GitHub collaborator: `@natea`.
-
 ## Quick Start
 
 ```bash

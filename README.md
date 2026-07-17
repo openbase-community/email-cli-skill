@@ -74,10 +74,10 @@ manual local testing outside that dashboard, rerun the reviewed command with `--
 
 ```bash
 # List available skills
-npx skills add montaguegabe/gmail-cli-skill --list
+npx skills add openbase-community/gmail-cli-skill --list
 
 # Install the included skill
-npx skills add montaguegabe/gmail-cli-skill --skill gmail-cli
+npx skills add openbase-community/gmail-cli-skill --skill gmail-cli
 ```
 
 Optional flags:

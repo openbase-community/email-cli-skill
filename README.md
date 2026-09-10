@@ -99,7 +99,7 @@ Outlook uses `~/.config/gmail-cli/outlook`, or `OUTLOOK_CLI_CONFIG_DIR`. Default
 ## Skill install
 
 ```bash
-npx skills add montaguegabe/gmail-cli-skill --skill gmail-cli
+npx skills add openbase-community/gmail-cli-skill --skill gmail-cli
 ```
 
 The `gmail-cli` skill covers both providers. The package and existing command name remain compatible with previous installations.

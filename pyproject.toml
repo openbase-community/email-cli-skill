@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/montaguegabe/gmail-cli-skill"
+Repository = "https://github.com/openbase-community/gmail-cli-skill"
 
 [project.optional-dependencies]
 dev = [

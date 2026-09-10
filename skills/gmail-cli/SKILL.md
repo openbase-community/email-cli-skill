@@ -1,11 +1,11 @@
 ---
 name: gmail-cli
 description: >-
-  Use this skill for Gmail or Outlook/Microsoft 365 email through the local CLI: authentication, search, message and thread reading, approved senders, draft creation, replies, and sending.
-version: 0.2.0
+  Use this skill for Gmail, Outlook/Microsoft 365, or Apple Mail email through the local CLI: authentication, search, message and thread reading, approved senders, draft creation, replies, and sending.
+version: 0.3.0
 ---
 
-# Gmail and Outlook CLI
+# Gmail, Outlook, and Apple Mail CLI
 
 Use the local CLI for Gmail and Outlook/Microsoft 365 email with Openbase Coder approval gates. `gmail-cli` defaults to Gmail; `outlook-cli` defaults to Outlook. `gmail-cli --provider outlook` is equivalent to `outlook-cli`. Do not infer that a connected Gmail account grants access to an Outlook account.
 
@@ -102,3 +102,15 @@ Gmail retains `~/.config/gmail-cli` and the existing `GMAIL_CLI_CREDENTIALS_PATH
 Outlook uses `~/.config/gmail-cli/outlook` or `OUTLOOK_CLI_CONFIG_DIR`. Each account has its own `token.json` and `approved_senders.json`. `OUTLOOK_CLI_CLIENT_ID` and `OUTLOOK_CLI_TENANT` configure initial Microsoft sign-in; `OUTLOOK_CLI_APPROVED_SENDERS` supplies optional comma-separated Outlook sender addresses. Gmail environment permissions are not used for Outlook. Tokens are stored with owner-only permissions. Never output token-cache contents or commit credentials, tokens, or approved-sender files.
 
 This CLI covers email. It does not provide Outlook calendar operations. Consult the repository README for Microsoft app registration and provider differences.
+
+## Apple Mail local connection (macOS)
+
+Use `apple-mail-cli` or `gmail-cli --provider apple-mail` for accounts already configured in Apple's Mail app. Run `auth accounts` to discover enabled accounts, then `auth login --account school --username user@school.edu` to bind a CLI alias. Mail handles OAuth and syncing; do not extract credentials or impersonate Apple's OAuth app. The calling terminal/app may need macOS Automation permission to control Mail.
+
+Start with read-only mode. `--include-compose` and `--include-send` enable local CLI capabilities; these flags do not narrow the underlying permissions granted to Mail. All draft, send, and approved-sender changes retain the dashboard workflow above. Sender permissions are isolated under the `apple-mail` provider and never inherited from Gmail or Graph/Outlook.
+
+`folders`, `search`, and `message` work through Mail's locally synced data. Search defaults to the mailbox named `Inbox`; use a folder ID for other or localized mailboxes. Only `from:`, `subject:`, and plain sender/subject text are supported, all combined with AND. There is no body search. Each page scans at most 250 local messages; continue with `next_page_token` even after an empty page. Preserve query, folder, and result limit. Mailbox changes can shift page offsets; search again after moving a message. Never claim local results cover all server mail unless sync completeness was independently established.
+
+Mail has no stable conversation IDs: `thread` and `search --threads` return errors. For `draft-reply`, pass the original message ID instead of a thread ID. Native replies require the original sender's approval and include that message's quoted trail by default. Verify `reply_to_message_id` and `quoted_history_included` in the result. Only CLI-created drafts whose Mail compose objects are still available can be sent by opaque draft ID. If content, recipients, or sender changed, or a send was already attempted, inspect and send manually in Mail; never recreate or resend automatically. Draft/reply/send have automated safeguard tests but still need live validation with an approved write.
+
+Apple Mail credentials remain in macOS/Mail. The CLI stores account bindings, sender approval files, and draft fingerprints under `~/.config/gmail-cli/apple-mail` (or `APPLE_MAIL_CLI_CONFIG_DIR`). Optional sender env: `APPLE_MAIL_CLI_APPROVED_SENDERS`. This backend is macOS-only and provides no calendar commands.

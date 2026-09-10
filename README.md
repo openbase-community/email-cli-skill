@@ -1,4 +1,4 @@
-# Gmail and Outlook CLI Skill
+# Gmail, Outlook, and Apple Mail CLI Skill
 
 A local email command line tool and agent skill with approval gates for drafts, sending, and approved-sender changes. Existing `gmail-cli` commands continue to use Gmail. Use `outlook-cli` for Microsoft 365 work/school accounts and Outlook.com, or select Outlook explicitly with `gmail-cli --provider outlook`.
 
@@ -11,9 +11,35 @@ uv sync --extra dev
 uv run gmail-cli --help
 uv run outlook-cli --help
 
-# Install both commands locally from this checkout:
+# Install all three commands locally from this checkout:
 uv tool install --editable .
 ```
+
+## Apple Mail on macOS
+
+Use `apple-mail-cli` (or `gmail-cli --provider apple-mail`) for an account already signed in and syncing in Apple's Mail app, including Exchange accounts. This uses Mail's local scripting interface, not Microsoft Graph, a browser, or an impersonated OAuth client. Mail owns the credentials. macOS may ask you to allow the calling terminal/app to control Mail under Privacy & Security → Automation. Complete account sign-in and any organization consent in Mail yourself.
+
+```bash
+apple-mail-cli auth accounts
+apple-mail-cli auth login --account school --username user@school.edu
+apple-mail-cli folders --account school
+apple-mail-cli search '' --account school --max-results 10
+apple-mail-cli search 'from:alice@example.com subject:"planning meeting"' --account school
+apple-mail-cli message MESSAGE_ID --account school
+apple-mail-cli message MESSAGE_ID --account school --include-body
+```
+
+Login binds the CLI alias to an exact enabled Mail account ID and email; it does not start OAuth or save tokens. Compose/send are off by default in the CLI. These are local safeguards, not restrictions on Mail's underlying Microsoft permissions. Add `--include-compose` and `--include-send` to `auth login` when needed; every write still uses the existing approval dashboard. Rebinding an alias to another Mail account is refused.
+
+Search defaults to the mailbox named `Inbox`. Pass an opaque folder ID from `folders` with `--folder-id` to select another mailbox (including localized Inbox names). Queries match only sender/subject metadata: `from:`, `subject:`, and plain text, with all terms required. Unsupported operators are rejected. Each page scans at most 250 locally available messages, so an empty result page can still have a continuation token. Reuse exactly the same query, folder, and result limit with `--page-token`. Results follow Mail's current order; changes during pagination can shift offsets. Results reflect Mail's local sync, not a guaranteed complete server search. Message IDs are local to this Mac and account; after moving a message or rebuilding Mail's database, search again.
+
+Approved senders are separate from Gmail and Graph/Outlook. Use `apple-mail-cli approved-senders add --account school alice@example.com` and approve the dashboard request. Bodies are fetched only after checking the sender and rechecking the exact header in Mail. Configuration lives under `~/.config/gmail-cli/apple-mail` (override with `APPLE_MAIL_CLI_CONFIG_DIR`); the optional sender environment variable is `APPLE_MAIL_CLI_APPROVED_SENDERS`.
+
+Draft commands use the same syntax as other providers. On Apple Mail, `draft-reply` takes the original **message ID**, because Mail does not expose stable conversation IDs. `thread` and `search --threads` are unavailable. Replies use Mail's native reply operation and quote the original message after the approved-sender check; quoted content over 50,000 characters requires explicitly disabling quoting. The original sender must be approved even for an unquoted native reply.
+
+Only drafts created through this CLI can be sent through it, while their compose objects remain available in Mail. Opaque draft IDs bind a local manifest to the exact draft content, recipients, and sender. Changed or closed drafts must be reviewed/sent manually in Mail. A send attempt is recorded before invoking Mail, and cannot be automatically repeated after a timeout or failure. Acceptance is not delivery confirmation. Account bindings and draft manifests are owner-readable only and contain no OAuth tokens; draft manifests store content hashes rather than message bodies.
+
+Apple Mail account discovery, folder listing, search, pagination, and metadata reads have been checked against a live account. Draft/reply/send safeguards have automated test coverage; writes require separate live validation with an approved draft. This provider does not implement calendar access.
 
 ## Gmail authentication
 

@@ -57,7 +57,11 @@ def load_approved_senders(
     senders: set[str] = set()
     sources: list[str] = []
 
-    env_name = APPROVED_SENDERS_ENV if provider == "gmail" else "OUTLOOK_CLI_APPROVED_SENDERS"
+    env_name = {
+        "gmail": APPROVED_SENDERS_ENV,
+        "outlook": "OUTLOOK_CLI_APPROVED_SENDERS",
+        "apple-mail": "APPLE_MAIL_CLI_APPROVED_SENDERS",
+    }[provider]
     env_value = os.environ.get(env_name)
     if provider == "gmail" and not env_value:
         env_value = os.environ.get(LEGACY_APPROVED_SENDERS_ENV)

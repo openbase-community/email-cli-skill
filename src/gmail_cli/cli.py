@@ -26,6 +26,7 @@ from gmail_cli.auth import (
 )
 from gmail_cli.cli_parser import build_parser
 from gmail_cli.client import GmailClient
+from gmail_cli.provider_paths import PROVIDER_NAMES
 from gmail_cli.scopes import (
     DEFAULT_SCOPES,
     GMAIL_COMPOSE_SCOPE,
@@ -52,8 +53,12 @@ def outlook_main() -> None:
     main(default_provider="outlook")
 
 
+def apple_mail_main() -> None:
+    main(default_provider="apple-mail")
+
+
 def dispatch(args: argparse.Namespace) -> dict[str, Any]:
-    provider_name = "Outlook" if args.provider == "outlook" else "Gmail"
+    provider_name = PROVIDER_NAMES[args.provider]
     if args.command == "auth":
         return dispatch_auth(args)
     if args.command in {"labels", "folders"}:
@@ -155,6 +160,10 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def dispatch_auth(args: argparse.Namespace) -> dict[str, Any]:
+    if args.provider == "apple-mail":
+        from gmail_cli.apple_mail_auth import dispatch_auth as apple_mail_auth
+
+        return apple_mail_auth(args)
     if args.provider == "outlook":
         from gmail_cli.outlook_auth import dispatch_auth as outlook_auth
 
@@ -192,7 +201,7 @@ def dispatch_auth(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def dispatch_approved_senders(args: argparse.Namespace) -> dict[str, Any]:
-    provider_name = "Outlook" if args.provider == "outlook" else "Gmail"
+    provider_name = PROVIDER_NAMES[args.provider]
     if args.approved_command == "list":
         approved = load_approved_senders(args.account, provider=args.provider)
     elif args.approved_command == "add":
@@ -236,6 +245,15 @@ def dispatch_approved_senders(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def configured_client(account: str | None = None, provider: str = "gmail"):
+    if provider == "apple-mail":
+        from gmail_cli.apple_mail_auth import load_account
+        from gmail_cli.apple_mail_client import AppleMailClient
+
+        return AppleMailClient(
+            load_account(account),
+            load_approved_senders(account, provider=provider),
+            account_name=account,
+        )
     if provider == "outlook":
         from gmail_cli.outlook_auth import load_credentials as load_outlook_credentials
         from gmail_cli.outlook_client import OutlookClient

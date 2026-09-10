@@ -6,7 +6,6 @@ import json
 import os
 import re
 import sys
-import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -16,6 +15,7 @@ import msal
 from gmail_cli.accounts import account_dir, list_account_infos, normalize_account_name
 from gmail_cli.approved_senders import approved_senders_path
 from gmail_cli.provider_paths import provider_config_dir
+from gmail_cli.provider_paths import save_private as save_session
 
 READ_SCOPES = ["User.Read", "Mail.Read"]
 COMPOSE_SCOPE = "Mail.ReadWrite"
@@ -45,20 +45,6 @@ def authority(tenant: str) -> str:
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9.-]{0,252}", tenant):
         raise ValueError("Microsoft tenant must be a tenant ID or domain, not a URL.")
     return f"https://login.microsoftonline.com/{tenant}"
-
-
-def save_session(path: Path, data: dict[str, Any]) -> None:
-    """Atomic replacement with owner-only permissions from the moment of creation."""
-    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, delete=False) as f:
-        temp = Path(f.name)
-        try:
-            json.dump(data, f)
-            f.flush()
-            os.fsync(f.fileno())
-            os.replace(temp, path)
-        finally:
-            temp.unlink(missing_ok=True)
 
 
 def _result_credentials(result: dict | None, username: str) -> OutlookCredentials:

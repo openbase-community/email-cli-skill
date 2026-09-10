@@ -1,13 +1,17 @@
-"""Shared Gmail/Outlook command-line arguments."""
+"""Shared email provider command-line arguments."""
 
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
 
+from gmail_cli.provider_paths import PROVIDER_NAMES
+
 
 def build_parser(*, default_provider: str = "gmail") -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Local Gmail and Outlook CLI with approval gates")
+    parser = argparse.ArgumentParser(
+        description="Local Gmail, Outlook, and Apple Mail CLI with approval gates"
+    )
     add_provider_argument(parser, default=default_provider)
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -24,7 +28,9 @@ def build_parser(*, default_provider: str = "gmail") -> argparse.ArgumentParser:
     login.add_argument("--include-send", action="store_true", help="Allow sending drafts")
     login.add_argument("--client-id", help="Microsoft Entra public client application ID")
     login.add_argument("--tenant", help="Microsoft tenant ID/domain (default: common)")
-    login.add_argument("--username", help="Expected Microsoft sign-in email")
+    login.add_argument(
+        "--username", help="Expected email for Microsoft sign-in or Apple Mail account binding"
+    )
     login.add_argument("--device-code", action="store_true", help="Use Microsoft device login")
     login.add_argument("--port", type=int, default=0, help="Local OAuth callback port")
     paths = auth_subparsers.add_parser("paths", help="Print credential and config paths")
@@ -37,9 +43,7 @@ def build_parser(*, default_provider: str = "gmail") -> argparse.ArgumentParser:
 
     search = subparsers.add_parser("search", help="Search messages or threads")
     add_account_argument(search)
-    search.add_argument(
-        "query", help="Gmail query or Outlook KQL query (empty string lists messages)"
-    )
+    search.add_argument("query", help="Provider search query (empty string lists messages)")
     search.add_argument("--threads", action="store_true", help="Search threads instead of messages")
     search.add_argument("--max-results", type=int, default=10)
     search.add_argument("--page-token")
@@ -104,7 +108,7 @@ def build_parser(*, default_provider: str = "gmail") -> argparse.ArgumentParser:
 
 
 def add_provider_argument(parser: argparse.ArgumentParser, *, default=argparse.SUPPRESS) -> None:
-    parser.add_argument("--provider", choices=["gmail", "outlook"], default=default)
+    parser.add_argument("--provider", choices=list(PROVIDER_NAMES), default=default)
 
 
 def add_account_argument(parser: argparse.ArgumentParser) -> None:

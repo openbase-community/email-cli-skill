@@ -11,6 +11,7 @@ from typing import Any
 
 from gmail_cli.accounts import account_dir, normalize_account_name
 from gmail_cli.auth_paths import APP_CONFIG_DIR
+from gmail_cli.provider_paths import provider_config_dir
 
 APPROVED_SENDERS_ENV = "GMAIL_CLI_APPROVED_SENDERS"
 LEGACY_APPROVED_SENDERS_ENV = "GMAIL_MCP_APPROVED_SENDERS"
@@ -36,7 +37,9 @@ class ApprovedSenders:
         }
 
 
-def approved_senders_path(account: str | None = None) -> Path:
+def approved_senders_path(account: str | None = None, *, provider: str = "gmail") -> Path:
+    if provider != "gmail":
+        return account_dir(provider_config_dir(provider), account) / "approved_senders.json"
     env_path = os.environ.get(APPROVED_SENDERS_PATH_ENV) or os.environ.get(
         LEGACY_APPROVED_SENDERS_PATH_ENV
     )
@@ -48,16 +51,21 @@ def approved_senders_path(account: str | None = None) -> Path:
     return account_dir(APP_CONFIG_DIR, name) / "approved_senders.json"
 
 
-def load_approved_senders(account: str | None = None) -> ApprovedSenders:
+def load_approved_senders(
+    account: str | None = None, *, provider: str = "gmail"
+) -> ApprovedSenders:
     senders: set[str] = set()
     sources: list[str] = []
 
-    env_value = os.environ.get(APPROVED_SENDERS_ENV) or os.environ.get(LEGACY_APPROVED_SENDERS_ENV)
+    env_name = APPROVED_SENDERS_ENV if provider == "gmail" else "OUTLOOK_CLI_APPROVED_SENDERS"
+    env_value = os.environ.get(env_name)
+    if provider == "gmail" and not env_value:
+        env_value = os.environ.get(LEGACY_APPROVED_SENDERS_ENV)
     if env_value:
         senders.update(normalize_sender_list(_split_sender_values(env_value)))
-        sources.append(APPROVED_SENDERS_ENV)
+        sources.append(env_name)
 
-    path = approved_senders_path(account)
+    path = approved_senders_path(account, provider=provider)
     if path.exists():
         senders.update(normalize_sender_list(_read_sender_file(path)))
         sources.append(str(path))
@@ -65,9 +73,11 @@ def load_approved_senders(account: str | None = None) -> ApprovedSenders:
     return ApprovedSenders(senders=frozenset(senders), sources=tuple(sources))
 
 
-def save_approved_senders(senders: list[str], account: str | None = None) -> Path:
+def save_approved_senders(
+    senders: list[str], account: str | None = None, *, provider: str = "gmail"
+) -> Path:
     normalized = sorted(normalize_sender_list(senders))
-    path = approved_senders_path(account)
+    path = approved_senders_path(account, provider=provider)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps({"approved_senders": normalized}, indent=2) + "\n",
@@ -77,18 +87,22 @@ def save_approved_senders(senders: list[str], account: str | None = None) -> Pat
     return path
 
 
-def add_approved_senders(senders: list[str], account: str | None = None) -> ApprovedSenders:
-    existing = load_approved_senders(account)
+def add_approved_senders(
+    senders: list[str], account: str | None = None, *, provider: str = "gmail"
+) -> ApprovedSenders:
+    existing = load_approved_senders(account, provider=provider)
     merged = sorted(set(existing.senders) | normalize_sender_list(senders))
-    save_approved_senders(merged, account)
-    return load_approved_senders(account)
+    save_approved_senders(merged, account, provider=provider)
+    return load_approved_senders(account, provider=provider)
 
 
-def remove_approved_senders(senders: list[str], account: str | None = None) -> ApprovedSenders:
-    existing = load_approved_senders(account)
+def remove_approved_senders(
+    senders: list[str], account: str | None = None, *, provider: str = "gmail"
+) -> ApprovedSenders:
+    existing = load_approved_senders(account, provider=provider)
     removed = normalize_sender_list(senders)
-    save_approved_senders(sorted(set(existing.senders) - removed), account)
-    return load_approved_senders(account)
+    save_approved_senders(sorted(set(existing.senders) - removed), account, provider=provider)
+    return load_approved_senders(account, provider=provider)
 
 
 def extract_sender_addresses(value: str | None) -> list[str]:

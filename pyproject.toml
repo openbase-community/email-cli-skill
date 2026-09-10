@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gmail-cli-skill"
-version = "0.1.0"
-description = "A local Gmail CLI and agent skill with explicit approval gates for sensitive Gmail actions."
+version = "0.2.0"
+description = "A local Gmail and Outlook CLI and agent skill with explicit approval gates for email actions."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -15,6 +15,8 @@ dependencies = [
   "google-api-python-client>=2.150.0",
   "google-auth>=2.35.0",
   "google-auth-oauthlib>=1.2.1",
+  "msal>=1.31.0",
+  "requests>=2.32.3",
 ]
 
 [project.urls]
@@ -28,6 +30,7 @@ dev = [
 
 [project.scripts]
 gmail-cli = "gmail_cli.cli:main"
+outlook-cli = "gmail_cli.cli:outlook_main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/gmail_cli"]

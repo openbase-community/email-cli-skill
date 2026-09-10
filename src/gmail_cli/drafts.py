@@ -101,6 +101,13 @@ def quote_message(message: dict[str, Any]) -> str:
 
     date = headers.get("Date", "").strip()
     sender = headers.get("From", "").strip()
+    return quote_text(body_text, date, sender)
+
+
+def quote_text(body_text: str, date: str, sender: str) -> str:
+    """Render a visible plain-text email trail for either provider."""
+    if not body_text.strip():
+        return ""
     attribution_parts = [part for part in [date, sender] if part]
     attribution = " ".join(attribution_parts) if attribution_parts else "the previous message"
     quoted_lines = "\n".join(f"> {line}" if line else ">" for line in body_text.splitlines())

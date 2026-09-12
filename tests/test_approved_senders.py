@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 
-from gmail_cli.accounts import account_token_path, list_account_infos
-from gmail_cli.approved_senders import (
+from email_cli.accounts import account_token_path, list_account_infos
+from email_cli.approved_senders import (
     ApprovedSenders,
     extract_sender_addresses,
     load_approved_senders,

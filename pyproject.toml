@@ -3,13 +3,13 @@ requires = ["hatchling>=1.26"]
 build-backend = "hatchling.build"
 
 [project]
-name = "gmail-cli-skill"
-version = "0.3.0"
+name = "email-cli-skill"
+version = "0.4.0"
 description = "A local Gmail, Outlook, and Apple Mail CLI and agent skill with explicit approval gates for email actions."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-authors = [{ name = "Gmail CLI Skill Maintainers" }]
+authors = [{ name = "Email CLI Skill Maintainers" }]
 dependencies = [
   "beautifulsoup4>=4.12.3",
   "google-api-python-client>=2.150.0",
@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/openbase-community/gmail-cli-skill"
+Repository = "https://github.com/openbase-community/email-cli-skill"
 
 [project.optional-dependencies]
 dev = [
@@ -29,12 +29,13 @@ dev = [
 ]
 
 [project.scripts]
-gmail-cli = "gmail_cli.cli:main"
-outlook-cli = "gmail_cli.cli:outlook_main"
-apple-mail-cli = "gmail_cli.cli:apple_mail_main"
+email-cli = "email_cli.cli:main"
+gmail-cli = "email_cli.cli:main"
+outlook-cli = "email_cli.cli:outlook_main"
+apple-mail-cli = "email_cli.cli:apple_mail_main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/gmail_cli"]
+packages = ["src/email_cli"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from gmail_cli import approved_senders, cli
+from email_cli import approved_senders, cli
 
 
 @pytest.mark.parametrize(

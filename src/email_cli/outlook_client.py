@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import json
 
-from gmail_cli.approved_senders import ApprovedSenders
-from gmail_cli.graph import GraphTransport, item_path
-from gmail_cli.outlook_drafts import OutlookDrafts
-from gmail_cli.outlook_parsing import METADATA_SELECT, normalize_message, sender_approved
+from email_cli.approved_senders import ApprovedSenders
+from email_cli.graph import GraphTransport, item_path
+from email_cli.outlook_drafts import OutlookDrafts
+from email_cli.outlook_parsing import METADATA_SELECT, normalize_message, sender_approved
 
 
 class OutlookClient(OutlookDrafts):

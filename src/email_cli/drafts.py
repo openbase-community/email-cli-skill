@@ -7,7 +7,7 @@ from email.message import EmailMessage
 from email.utils import formatdate, make_msgid
 from typing import Any
 
-from gmail_cli.parsing import choose_body_text, extract_headers, extract_payload_content
+from email_cli.parsing import choose_body_text, extract_headers, extract_payload_content
 
 
 def encode_message(message: EmailMessage) -> str:

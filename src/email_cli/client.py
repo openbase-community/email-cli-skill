@@ -6,16 +6,16 @@ from typing import Any
 
 from google.oauth2.credentials import Credentials
 
-from gmail_cli.approved_senders import ApprovedSenders
-from gmail_cli.drafts import build_new_message, build_reply_message, encode_message
-from gmail_cli.parsing import (
+from email_cli.approved_senders import ApprovedSenders
+from email_cli.drafts import build_new_message, build_reply_message, encode_message
+from email_cli.parsing import (
     INTERESTING_HEADERS,
     extract_headers,
     normalize_message,
     normalize_thread,
 )
-from gmail_cli.safety import require_confirmation
-from gmail_cli.scopes import GMAIL_COMPOSE_SCOPE, GMAIL_SEND_SCOPE
+from email_cli.safety import require_confirmation
+from email_cli.scopes import GMAIL_COMPOSE_SCOPE, GMAIL_SEND_SCOPE
 
 
 class GmailClient:

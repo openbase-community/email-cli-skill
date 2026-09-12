@@ -1,4 +1,4 @@
-"""Approval gates for user-visible Gmail side effects."""
+"""Approval gates for user-visible email side effects."""
 
 from __future__ import annotations
 
@@ -30,6 +30,7 @@ class ApprovalRequest:
             separators=(",", ":"),
         )
         digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()[:24]
+        # Retain existing IDs so pending approvals survive the package rename.
         return f"gmail-cli:{digest}"
 
     def as_dict(self) -> dict[str, Any]:
@@ -58,11 +59,11 @@ class ApprovalRequest:
             "id": self.id,
             "method": "exec/requestApproval",
             "params": {
-                "command": f"gmail-cli {self.action}",
+                "command": f"email-cli {self.action}",
                 "description": self.prompt,
                 "reason": self.prompt,
                 "justification": self.prompt,
-                "toolName": "gmail-cli",
+                "toolName": "email-cli",
                 "action": self.action,
                 "details": self.details,
                 "dashboardUrl": DASHBOARD_URL,
@@ -72,7 +73,7 @@ class ApprovalRequest:
 
 
 class ApprovalRequiredError(RuntimeError):
-    """Raised before a sensitive Gmail action when user approval is missing."""
+    """Raised before a sensitive email action when user approval is missing."""
 
     def __init__(self, request: ApprovalRequest):
         super().__init__(request.prompt)

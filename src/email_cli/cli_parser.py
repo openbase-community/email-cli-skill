@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from gmail_cli.provider_paths import PROVIDER_NAMES
+from email_cli.provider_paths import PROVIDER_NAMES
 
 
 def build_parser(*, default_provider: str = "gmail") -> argparse.ArgumentParser:

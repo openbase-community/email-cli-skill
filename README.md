@@ -1,6 +1,6 @@
-# Gmail, Outlook, and Apple Mail CLI Skill
+# Email CLI Skill
 
-A local email command line tool and agent skill with approval gates for drafts, sending, and approved-sender changes. Existing `gmail-cli` commands continue to use Gmail. Use `outlook-cli` for Microsoft 365 work/school accounts and Outlook.com, or select Outlook explicitly with `gmail-cli --provider outlook`.
+A local email command line tool and agent skill with approval gates for drafts, sending, and approved-sender changes. `email-cli` is the shared entry point with `--provider gmail`, `--provider outlook`, or `--provider apple-mail` (default: Gmail). Existing `gmail-cli` commands continue to use Gmail. Use `outlook-cli` for Microsoft 365 work/school accounts and Outlook.com, or select Outlook explicitly with `gmail-cli --provider outlook`.
 
 Search results expose metadata without snippets or message bodies. Body reads require an approved sender. Each provider and named account has its own credentials and sender permissions; Gmail permissions do not carry over to Outlook.
 
@@ -8,10 +8,10 @@ Search results expose metadata without snippets or message bodies. Body reads re
 
 ```bash
 uv sync --extra dev
-uv run gmail-cli --help
+uv run email-cli --help
 uv run outlook-cli --help
 
-# Install all three commands locally from this checkout:
+# Install the shared command and provider aliases locally from this checkout:
 uv tool install --editable .
 ```
 
@@ -125,10 +125,10 @@ Outlook uses `~/.config/gmail-cli/outlook`, or `OUTLOOK_CLI_CONFIG_DIR`. Default
 ## Skill install
 
 ```bash
-npx skills add openbase-community/gmail-cli-skill --skill gmail-cli
+npx skills add openbase-community/email-cli-skill --skill email-cli
 ```
 
-The `gmail-cli` skill covers both providers. The package and existing command name remain compatible with previous installations.
+The `email-cli` skill covers Gmail, Outlook/Microsoft 365, and Apple Mail. The provider-specific commands remain available as aliases into the same package.
 
 ## Development
 
@@ -139,3 +139,7 @@ uv run ruff check .
 ```
 
 Tests mock Google/Microsoft services and sign-in. Live tenant consent and API behavior require a separately authenticated account. The CLI supports email operations; it does not add Outlook calendar commands.
+
+## Renamed from gmail-cli
+
+The skill is now `email-cli`, its repository is `openbase-community/email-cli-skill`, and its Python package is `email-cli-skill` (`email_cli`). For an existing uv tool installation, run `uv tool uninstall gmail-cli-skill` before installing the renamed package. Replace the old installed skill directory with `skills/email-cli` from this repository. The `gmail-cli`, `outlook-cli`, and `apple-mail-cli` executable aliases remain supported. Existing configuration under `~/.config/gmail-cli`, provider environment variables, and approval request IDs are retained so the rename preserves account bindings, tokens, approved senders, and pending approvals.

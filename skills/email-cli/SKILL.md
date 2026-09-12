@@ -1,13 +1,13 @@
 ---
-name: gmail-cli
+name: email-cli
 description: >-
   Use this skill for Gmail, Outlook/Microsoft 365, or Apple Mail email through the local CLI: authentication, search, message and thread reading, approved senders, draft creation, replies, and sending.
-version: 0.3.0
+version: 0.4.0
 ---
 
-# Gmail, Outlook, and Apple Mail CLI
+# Email CLI
 
-Use the local CLI for Gmail and Outlook/Microsoft 365 email with Openbase Coder approval gates. `gmail-cli` defaults to Gmail; `outlook-cli` defaults to Outlook. `gmail-cli --provider outlook` is equivalent to `outlook-cli`. Do not infer that a connected Gmail account grants access to an Outlook account.
+Use the Email CLI for Gmail, Outlook/Microsoft 365, and Apple Mail with Openbase Coder approval gates. `email-cli` is the shared entry point; use `--provider gmail`, `--provider outlook`, or `--provider apple-mail`. The existing provider-specific commands are aliases into the same package. `gmail-cli` defaults to Gmail; `outlook-cli` defaults to Outlook. `gmail-cli --provider outlook` is equivalent to `outlook-cli`. Do not infer that a connected Gmail account grants access to an Outlook account.
 
 ## Workflow
 

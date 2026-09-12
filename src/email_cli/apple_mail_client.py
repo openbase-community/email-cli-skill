@@ -7,9 +7,9 @@ import hashlib
 import json
 import shlex
 
-from gmail_cli.apple_mail_drafts import AppleMailDrafts
-from gmail_cli.apple_mail_transport import call_mail
-from gmail_cli.approved_senders import ApprovedSenders, extract_sender_addresses
+from email_cli.apple_mail_drafts import AppleMailDrafts
+from email_cli.apple_mail_transport import call_mail
+from email_cli.approved_senders import ApprovedSenders, extract_sender_addresses
 
 
 def encode_id(value: dict) -> str:

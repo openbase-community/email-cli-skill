@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from gmail_cli.client import GmailClient
-from gmail_cli.safety import ConfirmationRequiredError, require_confirmation
+from email_cli.client import GmailClient
+from email_cli.safety import ConfirmationRequiredError, require_confirmation
 
 
 class ExplodingService:

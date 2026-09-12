@@ -12,10 +12,10 @@ from typing import Any
 
 import msal
 
-from gmail_cli.accounts import account_dir, list_account_infos, normalize_account_name
-from gmail_cli.approved_senders import approved_senders_path
-from gmail_cli.provider_paths import provider_config_dir
-from gmail_cli.provider_paths import save_private as save_session
+from email_cli.accounts import account_dir, list_account_infos, normalize_account_name
+from email_cli.approved_senders import approved_senders_path
+from email_cli.provider_paths import provider_config_dir
+from email_cli.provider_paths import save_private as save_session
 
 READ_SCOPES = ["User.Read", "Mail.Read"]
 COMPOSE_SCOPE = "Mail.ReadWrite"

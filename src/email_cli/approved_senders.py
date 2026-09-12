@@ -9,9 +9,9 @@ from email.utils import getaddresses
 from pathlib import Path
 from typing import Any
 
-from gmail_cli.accounts import account_dir, normalize_account_name
-from gmail_cli.auth_paths import APP_CONFIG_DIR
-from gmail_cli.provider_paths import provider_config_dir
+from email_cli.accounts import account_dir, normalize_account_name
+from email_cli.auth_paths import APP_CONFIG_DIR
+from email_cli.provider_paths import provider_config_dir
 
 APPROVED_SENDERS_ENV = "GMAIL_CLI_APPROVED_SENDERS"
 LEGACY_APPROVED_SENDERS_ENV = "GMAIL_MCP_APPROVED_SENDERS"

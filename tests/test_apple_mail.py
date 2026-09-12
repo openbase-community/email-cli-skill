@@ -3,12 +3,12 @@ import subprocess
 
 import pytest
 
-from gmail_cli.apple_mail_auth import config_path, dispatch_auth, load_account
-from gmail_cli.apple_mail_client import AppleMailClient, search_terms
-from gmail_cli.apple_mail_transport import call_mail
-from gmail_cli.approved_senders import ApprovedSenders, load_approved_senders
-from gmail_cli.cli import dispatch
-from gmail_cli.cli_parser import build_parser
+from email_cli.apple_mail_auth import config_path, dispatch_auth, load_account
+from email_cli.apple_mail_client import AppleMailClient, search_terms
+from email_cli.apple_mail_transport import call_mail
+from email_cli.approved_senders import ApprovedSenders, load_approved_senders
+from email_cli.cli import dispatch
+from email_cli.cli_parser import build_parser
 
 
 @pytest.fixture
@@ -132,7 +132,7 @@ def test_binding_requires_exact_identity(monkeypatch, tmp_path):
     monkeypatch.setenv("APPLE_MAIL_CLI_CONFIG_DIR", str(tmp_path))
     accounts = [{"id": "one", "enabled": True, "emails": ["me@example.test"]}]
     monkeypatch.setattr(
-        "gmail_cli.apple_mail_auth.call_mail", lambda action: {"accounts": accounts}
+        "email_cli.apple_mail_auth.call_mail", lambda action: {"accounts": accounts}
     )
     args = build_parser(default_provider="apple-mail").parse_args(
         ["auth", "login", "--account", "school", "--username", "me@example.test"]
@@ -216,7 +216,7 @@ def test_ambiguous_send_stays_blocked(setup):
 
 
 def test_transport_keeps_values_out_of_source_and_argv(monkeypatch):
-    monkeypatch.setattr("gmail_cli.apple_mail_transport.sys.platform", "darwin")
+    monkeypatch.setattr("email_cli.apple_mail_transport.sys.platform", "darwin")
 
     def run(argv, **kwargs):
         assert "private body" not in " ".join(argv)
@@ -224,7 +224,7 @@ def test_transport_keeps_values_out_of_source_and_argv(monkeypatch):
         assert "shell" not in kwargs
         return subprocess.CompletedProcess(argv, 0, stdout='{"accepted": true}', stderr="")
 
-    monkeypatch.setattr("gmail_cli.apple_mail_transport.subprocess.run", run)
+    monkeypatch.setattr("email_cli.apple_mail_transport.subprocess.run", run)
     assert call_mail("draft-new", body="private body")["accepted"]
 
 
@@ -247,6 +247,6 @@ def test_cli_approval_stops_before_client(monkeypatch):
         assert kwargs["details"]["provider"] == "apple-mail"
         raise PermissionError("approval required")
 
-    monkeypatch.setattr("gmail_cli.cli.require_user_approval", approval)
+    monkeypatch.setattr("email_cli.cli.require_user_approval", approval)
     with pytest.raises(PermissionError, match="approval required"):
         dispatch(args)

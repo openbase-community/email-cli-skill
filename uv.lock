@@ -253,8 +253,8 @@ wheels = [
 ]
 
 [[package]]
-name = "gmail-cli-skill"
-version = "0.3.0"
+name = "email-cli-skill"
+version = "0.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },

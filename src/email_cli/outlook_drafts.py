@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from email.utils import getaddresses
 
-from gmail_cli.approved_senders import normalize_email_address
-from gmail_cli.drafts import quote_text
-from gmail_cli.graph import item_path
-from gmail_cli.outlook_auth import COMPOSE_SCOPE, SEND_SCOPE
-from gmail_cli.outlook_parsing import address_header
-from gmail_cli.outlook_parsing import body_text as extract_body_text
-from gmail_cli.safety import require_confirmation
+from email_cli.approved_senders import normalize_email_address
+from email_cli.drafts import quote_text
+from email_cli.graph import item_path
+from email_cli.outlook_auth import COMPOSE_SCOPE, SEND_SCOPE
+from email_cli.outlook_parsing import address_header
+from email_cli.outlook_parsing import body_text as extract_body_text
+from email_cli.safety import require_confirmation
 
 
 def recipients(value: str | None) -> list[dict]:

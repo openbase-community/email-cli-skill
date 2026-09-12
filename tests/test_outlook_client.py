@@ -4,11 +4,11 @@ from unittest.mock import Mock
 
 import pytest
 
-from gmail_cli.approved_senders import ApprovedSenders
-from gmail_cli.outlook_auth import OutlookCredentials
-from gmail_cli.outlook_client import OutlookClient
-from gmail_cli.outlook_parsing import METADATA_SELECT
-from gmail_cli.safety import ConfirmationRequiredError
+from email_cli.approved_senders import ApprovedSenders
+from email_cli.outlook_auth import OutlookCredentials
+from email_cli.outlook_client import OutlookClient
+from email_cli.outlook_parsing import METADATA_SELECT
+from email_cli.safety import ConfirmationRequiredError
 
 
 def message(id="m1", sender="alice@example.com", **extra):

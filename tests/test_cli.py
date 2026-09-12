@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from gmail_cli.cli import main
+from email_cli.cli import main
 
 
 def test_approved_sender_add_prints_approval_required_without_mutation(

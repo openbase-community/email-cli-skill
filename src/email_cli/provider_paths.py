@@ -7,7 +7,7 @@ import os
 import tempfile
 from pathlib import Path
 
-from gmail_cli.auth_paths import APP_CONFIG_DIR
+from email_cli.auth_paths import APP_CONFIG_DIR
 
 PROVIDER_NAMES = {"gmail": "Gmail", "outlook": "Outlook", "apple-mail": "Apple Mail"}
 

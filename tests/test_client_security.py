@@ -3,8 +3,8 @@ from __future__ import annotations
 import base64
 from typing import Any
 
-from gmail_cli.approved_senders import ApprovedSenders
-from gmail_cli.client import GmailClient
+from email_cli.approved_senders import ApprovedSenders
+from email_cli.client import GmailClient
 
 
 def b64(value: str) -> str:

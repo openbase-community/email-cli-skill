@@ -7,7 +7,7 @@ from urllib.parse import parse_qs, quote, urlsplit
 
 import requests
 
-from gmail_cli.outlook_auth import OutlookCredentials
+from email_cli.outlook_auth import OutlookCredentials
 
 GRAPH_ROOT = "https://graph.microsoft.com/v1.0"
 

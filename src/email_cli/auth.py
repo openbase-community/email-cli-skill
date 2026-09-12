@@ -9,8 +9,8 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-from gmail_cli.accounts import account_token_path, list_account_infos, normalize_account_name
-from gmail_cli.auth_paths import APP_CONFIG_DIR, DEFAULT_CREDENTIALS_PATH, DEFAULT_TOKEN_PATH
+from email_cli.accounts import account_token_path, list_account_infos, normalize_account_name
+from email_cli.auth_paths import APP_CONFIG_DIR, DEFAULT_CREDENTIALS_PATH, DEFAULT_TOKEN_PATH
 
 
 def credentials_path() -> Path:

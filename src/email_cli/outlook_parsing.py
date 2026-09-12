@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from email.utils import formataddr
 
-from gmail_cli.approved_senders import ApprovedSenders, normalize_email_address
-from gmail_cli.parsing import html_to_text, truncate_text
+from email_cli.approved_senders import ApprovedSenders, normalize_email_address
+from email_cli.parsing import html_to_text, truncate_text
 
 METADATA_FIELDS = (
     "id",

@@ -5,10 +5,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from gmail_cli.accounts import account_dir, normalize_account_name
-from gmail_cli.apple_mail_transport import call_mail
-from gmail_cli.approved_senders import approved_senders_path
-from gmail_cli.provider_paths import provider_config_dir, save_private
+from email_cli.accounts import account_dir, normalize_account_name
+from email_cli.apple_mail_transport import call_mail
+from email_cli.approved_senders import approved_senders_path
+from email_cli.provider_paths import provider_config_dir, save_private
 
 
 def config_path(account: str | None = None) -> Path:

@@ -6,8 +6,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from gmail_cli import outlook_auth
-from gmail_cli.cli import build_parser
+from email_cli import outlook_auth
+from email_cli.cli import build_parser
 
 
 @pytest.fixture

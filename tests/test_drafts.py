@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import base64
 
-from gmail_cli.drafts import build_reply_message
+from email_cli.drafts import build_reply_message
 
 
 def b64(value: str) -> str:

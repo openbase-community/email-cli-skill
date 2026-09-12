@@ -10,24 +10,24 @@ from typing import Any
 
 from googleapiclient.discovery import build
 
-from gmail_cli.approval import ApprovalRequiredError, require_user_approval
-from gmail_cli.approved_senders import (
+from email_cli.approval import ApprovalRequiredError, require_user_approval
+from email_cli.approved_senders import (
     add_approved_senders,
     approved_senders_path,
     load_approved_senders,
     remove_approved_senders,
 )
-from gmail_cli.auth import (
+from email_cli.auth import (
     credentials_path,
     list_accounts,
     load_credentials,
     run_oauth_flow_for_account,
     token_path,
 )
-from gmail_cli.cli_parser import build_parser
-from gmail_cli.client import GmailClient
-from gmail_cli.provider_paths import PROVIDER_NAMES
-from gmail_cli.scopes import (
+from email_cli.cli_parser import build_parser
+from email_cli.client import GmailClient
+from email_cli.provider_paths import PROVIDER_NAMES
+from email_cli.scopes import (
     DEFAULT_SCOPES,
     GMAIL_COMPOSE_SCOPE,
     GMAIL_MODIFY_SCOPE,
@@ -161,11 +161,11 @@ def dispatch(args: argparse.Namespace) -> dict[str, Any]:
 
 def dispatch_auth(args: argparse.Namespace) -> dict[str, Any]:
     if args.provider == "apple-mail":
-        from gmail_cli.apple_mail_auth import dispatch_auth as apple_mail_auth
+        from email_cli.apple_mail_auth import dispatch_auth as apple_mail_auth
 
         return apple_mail_auth(args)
     if args.provider == "outlook":
-        from gmail_cli.outlook_auth import dispatch_auth as outlook_auth
+        from email_cli.outlook_auth import dispatch_auth as outlook_auth
 
         return outlook_auth(args)
     if args.auth_command == "login" and (
@@ -246,8 +246,8 @@ def dispatch_approved_senders(args: argparse.Namespace) -> dict[str, Any]:
 
 def configured_client(account: str | None = None, provider: str = "gmail"):
     if provider == "apple-mail":
-        from gmail_cli.apple_mail_auth import load_account
-        from gmail_cli.apple_mail_client import AppleMailClient
+        from email_cli.apple_mail_auth import load_account
+        from email_cli.apple_mail_client import AppleMailClient
 
         return AppleMailClient(
             load_account(account),
@@ -255,8 +255,8 @@ def configured_client(account: str | None = None, provider: str = "gmail"):
             account_name=account,
         )
     if provider == "outlook":
-        from gmail_cli.outlook_auth import load_credentials as load_outlook_credentials
-        from gmail_cli.outlook_client import OutlookClient
+        from email_cli.outlook_auth import load_credentials as load_outlook_credentials
+        from email_cli.outlook_client import OutlookClient
 
         return OutlookClient(
             credentials=load_outlook_credentials(account),

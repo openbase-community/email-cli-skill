@@ -7,11 +7,11 @@ import json
 import uuid
 from email.utils import getaddresses
 
-from gmail_cli.apple_mail_auth import config_path
-from gmail_cli.approved_senders import normalize_email_address
-from gmail_cli.drafts import quote_text
-from gmail_cli.provider_paths import save_private
-from gmail_cli.safety import require_confirmation
+from email_cli.apple_mail_auth import config_path
+from email_cli.approved_senders import normalize_email_address
+from email_cli.drafts import quote_text
+from email_cli.provider_paths import save_private
+from email_cli.safety import require_confirmation
 
 
 def recipients(value: str | None) -> list[str]:

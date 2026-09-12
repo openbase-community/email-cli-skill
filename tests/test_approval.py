@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from gmail_cli.approval import (
+from email_cli.approval import (
     ApprovalRequest,
     ApprovalRequiredError,
     read_approval_store,
@@ -34,7 +34,7 @@ def test_require_user_approval_records_dashboard_request(tmp_path, monkeypatch) 
         details={"draft_id": "draft-1"},
     )
     assert store["requests"][request.id]["method"] == "exec/requestApproval"
-    assert store["requests"][request.id]["params"]["toolName"] == "gmail-cli"
+    assert store["requests"][request.id]["params"]["toolName"] == "email-cli"
 
 
 def test_require_user_approval_allows_after_dashboard_accept(tmp_path, monkeypatch) -> None:

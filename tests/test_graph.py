@@ -5,8 +5,8 @@ from urllib.parse import urlencode
 
 import pytest
 
-from gmail_cli.graph import GRAPH_ROOT, GraphTransport, item_path
-from gmail_cli.outlook_auth import OutlookCredentials
+from email_cli.graph import GRAPH_ROOT, GraphTransport, item_path
+from email_cli.outlook_auth import OutlookCredentials
 
 
 @pytest.fixture

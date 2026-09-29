@@ -57,8 +57,9 @@ def normalize_message(
     *,
     include_body: bool = False,
     max_body_chars: int = 4000,
+    message_approved: bool = False,
 ) -> dict:
-    allowed = sender_approved(message, approved)
+    allowed = sender_approved(message, approved) or message_approved
     result = {
         "id": message.get("id"),
         "thread_id": message.get("conversationId"),

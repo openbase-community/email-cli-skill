@@ -143,3 +143,10 @@ Tests mock Google/Microsoft services and sign-in. Live tenant consent and API be
 ## Renamed from gmail-cli
 
 The skill is now `email-cli`, its repository is `openbase-community/email-cli-skill`, and its Python package is `email-cli-skill` (`email_cli`). For an existing uv tool installation, run `uv tool uninstall gmail-cli-skill` before installing the renamed package. Replace the old installed skill directory with `skills/email-cli` from this repository. The `gmail-cli`, `outlook-cli`, and `apple-mail-cli` executable aliases remain supported. Existing configuration under `~/.config/gmail-cli`, provider environment variables, and approval request IDs are retained so the rename preserves account bindings, tokens, approved senders, and pending approvals.
+
+
+## Optional Jev message screening
+
+User-authorized, account-specific Jev screening can release individual messages from unapproved senders without granting sender-wide access. Configure `~/.config/email-cli/read-screening.json` with `enabled_accounts` and a private `api_key_file`, then use the normal message/thread commands. The classifier sends complete text/HTML to TypeSafe; flagged messages remain redacted. Drafts, sends, and sender changes keep their existing manual approval gates.
+
+See [the email skill](skills/email-cli/SKILL.md#jev-automatic-approval-of-individual-email-reads) for the policy, configuration, data handling, disable procedure, and paid evaluation commands. Paid tests are explicit scripts; normal pytest runs never call Jev. Keep mailbox audit reports under ignored `.reports/`.

@@ -14,8 +14,10 @@ from email_cli.parsing import (
     normalize_message,
     normalize_thread,
 )
+from email_cli.read_screening import screened_result
 from email_cli.safety import require_confirmation
 from email_cli.scopes import GMAIL_COMPOSE_SCOPE, GMAIL_SEND_SCOPE
+from email_cli.screening_content import gmail_state
 
 
 class GmailClient:
@@ -27,11 +29,13 @@ class GmailClient:
         credentials: Credentials | None = None,
         user_id: str = "me",
         approved_senders: ApprovedSenders | None = None,
+        read_screener=None,
     ):
         self.service = service
         self.credentials = credentials
         self.user_id = user_id
         self.approved_senders = approved_senders
+        self.read_screener = read_screener
 
     def search_messages(
         self,
@@ -106,14 +110,29 @@ class GmailClient:
             )
 
         metadata = self._get_message(message_id=message_id, message_format="metadata")
+        return self._read_metadata(metadata, include_body, max_body_chars)
+
+    def _read_metadata(self, metadata, include_body, max_body_chars):
         if include_body and self._message_sender_approved(metadata):
-            response = self._get_message(message_id=message_id, message_format="full")
+            response = self._get_message(message_id=metadata["id"], message_format="full")
             return normalize_message(
                 response,
                 include_body=True,
                 max_body_chars=max_body_chars,
                 approved_senders=self.approved_senders,
             )
+        if include_body and self.read_screener:
+            response = self._get_message(message_id=metadata["id"], message_format="full")
+            if response.get("id") != metadata.get("id"):
+                raise PermissionError("Message identity changed; body access refused.")
+            decision = self.read_screener.evaluate(gmail_state(response), message_id=response["id"])
+            result = normalize_message(
+                response if decision.approved else metadata,
+                include_body=decision.approved,
+                max_body_chars=max_body_chars,
+                approved_senders=None if decision.approved else self.approved_senders,
+            )
+            return screened_result(result, decision)
         return normalize_message(
             metadata,
             include_body=False,
@@ -152,19 +171,16 @@ class GmailClient:
             )
             .execute()
         )
-        messages = []
-        for message in metadata.get("messages") or []:
-            if include_body and self._message_sender_approved(message):
-                messages.append(self._get_message(message_id=message["id"], message_format="full"))
-            else:
-                messages.append(message)
-        response = {**metadata, "messages": messages}
-        return normalize_thread(
-            response,
-            include_body=include_body,
-            max_body_chars=max_body_chars,
-            approved_senders=self.approved_senders,
-        )
+        messages = [
+            self._read_metadata(message, include_body, max_body_chars)
+            for message in metadata.get("messages") or []
+        ]
+        return {
+            "id": metadata.get("id"),
+            "history_id": metadata.get("historyId"),
+            "message_count": len(messages),
+            "messages": messages,
+        }
 
     def create_draft_new(
         self,

@@ -10,6 +10,9 @@ import shlex
 from email_cli.apple_mail_drafts import AppleMailDrafts
 from email_cli.apple_mail_transport import call_mail
 from email_cli.approved_senders import ApprovedSenders, extract_sender_addresses
+from email_cli.parsing import html_to_text
+from email_cli.read_screening import screened_result
+from email_cli.screening_content import apple_mail_state
 
 
 def encode_id(value: dict) -> str:
@@ -43,11 +46,13 @@ class AppleMailClient(AppleMailDrafts):
         *,
         account_name: str | None = None,
         transport=None,
+        read_screener=None,
     ):
         self.account = account
         self.account_name = account_name
         self.approved_senders = approved_senders
         self.transport = transport or call_mail
+        self.read_screener = read_screener
 
     def _call(self, action: str, **payload) -> dict:
         return self.transport(
@@ -147,6 +152,22 @@ class AppleMailClient(AppleMailDrafts):
                 )
                 result["body"] = body["body"][:limit]
                 result["body_truncated"] = len(body["body"]) > limit
+            elif self.read_screener:
+                source = self._call("screening-source", **args, expected_sender=metadata["from"])
+                state = apple_mail_state(source["source"])
+                decision = self.read_screener.evaluate(state, message_id=message_id)
+                screened_result(result, decision)
+                result["body_access_allowed"] = decision.approved
+                if decision.approved:
+                    # Release only the exact content evaluated; never fetch a changed body.
+                    parts = state["parts"]
+                    plain = [p["content"] for p in parts if p["mime_type"] == "text/plain"]
+                    text = "\n\n".join(plain or [html_to_text(p["content"]) for p in parts])
+                    limit = min(max(max_body_chars, 0), 50000)
+                    result["body"] = text[:limit]
+                    result["body_truncated"] = len(text) > limit
+                else:
+                    result["body_omitted_reason"] = "message_flagged_for_review"
             else:
                 result["body_omitted_reason"] = "sender_not_approved"
         return result

@@ -14,3 +14,6 @@ client_secret*.json
 *.key
 *.p12
 *.pfx
+
+# Private evaluation reports and mailbox audit artifacts
+.reports/

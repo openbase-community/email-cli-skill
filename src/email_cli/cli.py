@@ -27,6 +27,7 @@ from email_cli.auth import (
 from email_cli.cli_parser import build_parser
 from email_cli.client import GmailClient
 from email_cli.provider_paths import PROVIDER_NAMES
+from email_cli.read_screening import configured_screener
 from email_cli.scopes import (
     DEFAULT_SCOPES,
     GMAIL_COMPOSE_SCOPE,
@@ -253,6 +254,7 @@ def configured_client(account: str | None = None, provider: str = "gmail"):
             load_account(account),
             load_approved_senders(account, provider=provider),
             account_name=account,
+            read_screener=configured_screener(account, provider),
         )
     if provider == "outlook":
         from email_cli.outlook_auth import load_credentials as load_outlook_credentials
@@ -261,6 +263,7 @@ def configured_client(account: str | None = None, provider: str = "gmail"):
         return OutlookClient(
             credentials=load_outlook_credentials(account),
             approved_senders=load_approved_senders(account, provider=provider),
+            read_screener=configured_screener(account, provider),
         )
     creds = load_credentials(account=account)
     service = build("gmail", "v1", credentials=creds, cache_discovery=False)
@@ -268,6 +271,7 @@ def configured_client(account: str | None = None, provider: str = "gmail"):
         service=service,
         credentials=creds,
         approved_senders=load_approved_senders(account=account),
+        read_screener=configured_screener(account, provider),
     )
 
 

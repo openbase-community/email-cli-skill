@@ -65,6 +65,11 @@ function run() {
             scanned: scanned, mailbox_message_count: count});
     }
     if (p.action === 'message') return JSON.stringify(metadata(original()));
+    if (p.action === 'screening-source') {
+        const m = original();
+        requireSender(m);
+        return JSON.stringify({source: m.source()});
+    }
     if (p.action === 'body') {
         const m = original();
         requireSender(m);

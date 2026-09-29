@@ -8,13 +8,18 @@ from email_cli.approved_senders import ApprovedSenders
 from email_cli.graph import GraphTransport, item_path
 from email_cli.outlook_drafts import OutlookDrafts
 from email_cli.outlook_parsing import METADATA_SELECT, normalize_message, sender_approved
+from email_cli.read_screening import screened_result
+from email_cli.screening_content import outlook_state
 
 
 class OutlookClient(OutlookDrafts):
-    def __init__(self, credentials, approved_senders: ApprovedSenders, transport=None):
+    def __init__(
+        self, credentials, approved_senders: ApprovedSenders, transport=None, read_screener=None
+    ):
         self.credentials = credentials
         self.approved_senders = approved_senders
         self.graph = transport or GraphTransport(credentials)
+        self.read_screener = read_screener
 
     def search_messages(
         self,
@@ -90,9 +95,29 @@ class OutlookClient(OutlookDrafts):
     def get_message(
         self, *, message_id: str, include_body: bool = False, max_body_chars: int = 4000
     ) -> dict:
-        message = self._metadata(message_id)
-        if include_body and sender_approved(message, self.approved_senders):
-            message = self._with_body(message)
+        return self._read_metadata(self._metadata(message_id), include_body, max_body_chars)
+
+    def _read_metadata(self, metadata, include_body, max_body_chars):
+        message = metadata
+        if include_body and sender_approved(metadata, self.approved_senders):
+            message = self._with_body(metadata)
+        elif include_body and self.read_screener:
+            message = self.graph.request(
+                "GET",
+                item_path("messages", metadata["id"]),
+                params={"$select": METADATA_SELECT + ",body"},
+            )
+            if message.get("id") != metadata.get("id"):
+                raise PermissionError("Message identity changed; body access refused.")
+            decision = self.read_screener.evaluate(outlook_state(message), message_id=message["id"])
+            result = normalize_message(
+                message if decision.approved else metadata,
+                self.approved_senders,
+                include_body=decision.approved,
+                max_body_chars=max_body_chars,
+                message_approved=decision.approved,
+            )
+            return screened_result(result, decision)
         return normalize_message(
             message, self.approved_senders, include_body=include_body, max_body_chars=max_body_chars
         )
@@ -118,17 +143,8 @@ class OutlookClient(OutlookDrafts):
     def get_thread(
         self, *, thread_id: str, include_body: bool = True, max_body_chars: int = 4000
     ) -> dict:
-        messages = []
-        for metadata in self._thread_metadata(thread_id):
-            message = metadata
-            if include_body and sender_approved(metadata, self.approved_senders):
-                message = self._with_body(metadata)
-            messages.append(
-                normalize_message(
-                    message,
-                    self.approved_senders,
-                    include_body=include_body,
-                    max_body_chars=max_body_chars,
-                )
-            )
+        messages = [
+            self._read_metadata(metadata, include_body, max_body_chars)
+            for metadata in self._thread_metadata(thread_id)
+        ]
         return {"id": thread_id, "message_count": len(messages), "messages": messages}

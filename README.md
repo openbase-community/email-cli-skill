@@ -2,7 +2,9 @@
 
 A local email command line tool and agent skill with approval gates for drafts, sending, and approved-sender changes. `email-cli` is the shared entry point with `--provider gmail`, `--provider outlook`, or `--provider apple-mail` (default: Gmail). Existing `gmail-cli` commands continue to use Gmail. Use `outlook-cli` for Microsoft 365 work/school accounts and Outlook.com, or select Outlook explicitly with `gmail-cli --provider outlook`.
 
-Search results expose metadata without snippets or message bodies. Body reads require an approved sender. Each provider and named account has its own credentials and sender permissions; Gmail permissions do not carry over to Outlook.
+Search results expose metadata without snippets or message bodies. Body reads require an approved sender or an explicitly enabled per-message Jev screening decision. Each provider and named account has its own credentials and sender permissions; Gmail permissions do not carry over to Outlook.
+
+Flagged messages can optionally receive a short GPT-5 nano preview for human review. Summaries require separate provider/account opt-in and an OpenAI key, and are checked by Jev before release. The original body remains redacted, and the preview grants no permissions. See the [skill's screening and preview configuration](skills/email-cli/SKILL.md#optional-previews-of-flagged-messages). Previews can be inaccurate or withheld; they exclude attachment contents and do not open links.
 
 ## Install
 

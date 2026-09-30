@@ -13,6 +13,7 @@ from typing import Any
 import requests
 
 from email_cli.accounts import normalize_account_name
+from email_cli.flagged_summary import configured_summarizer
 from email_cli.provider_paths import save_private
 from email_cli.screening_policy import (
     MAX_RISK,
@@ -22,6 +23,8 @@ from email_cli.screening_policy import (
     QUESTIONS,
 )
 from email_cli.screening_urls import inspect_urls
+from email_cli.summary_policy import POLICY_VERSION as SUMMARY_POLICY_VERSION
+from email_cli.summary_policy import QUESTIONS as SUMMARY_QUESTIONS
 
 CONFIG_PATH = Path.home() / ".config/email-cli/read-screening.json"
 ENDPOINT = "https://api.typesafe.ai/v1/systemone"
@@ -34,23 +37,33 @@ class ScreeningDecision:
     probabilities: dict[str, float] = field(default_factory=dict)
     usage: dict = field(default_factory=dict)
     model: str = MODEL
+    review_summary: dict | None = None
+    policy_version: str = POLICY_VERSION
 
-    def as_dict(self) -> dict:
-        return {
+    def as_dict(self, *, include_summary_text: bool = True) -> dict:
+        result = {
             "decision": "auto_approved" if self.approved else "flagged",
             "reasons": self.reasons,
             "probabilities": self.probabilities,
             "model": self.model,
-            "policy_version": POLICY_VERSION,
+            "policy_version": self.policy_version,
             "usage": self.usage,
         }
+        if self.review_summary is not None:
+            result["review_summary"] = {
+                k: v for k, v in self.review_summary.items() if include_summary_text or k != "text"
+            }
+        return result
 
 
 class ReadScreener:
-    def __init__(self, key: str, *, audit_path: Path | None = None, transport=None):
+    def __init__(
+        self, key: str, *, audit_path: Path | None = None, transport=None, summarizer=None
+    ):
         self._key = key
         self.audit_path = audit_path
         self.transport = transport or requests.Session()
+        self.summarizer = summarizer
 
     def evaluate(self, state: dict, *, message_id: str = "") -> ScreeningDecision:
         references, url_reasons = inspect_urls(state)
@@ -66,19 +79,44 @@ class ReadScreener:
             result = ScreeningDecision(False, ["missing_typesafe_key"])
         else:
             result = self._evaluate(state)
+        if not result.approved and self.summarizer:
+            result.review_summary = self._review_summary(state)
         if self.audit_path:
             # One atomic record per exact content and message; no private body or credentials.
             digest = hashlib.sha256((message_id + "\n" + encoded).encode()).hexdigest()
-            record = {"message_id": message_id, "content_sha256": digest, **result.as_dict()}
+            record = {
+                "message_id": message_id,
+                "content_sha256": digest,
+                **result.as_dict(include_summary_text=False),
+            }
             save_private(self.audit_path / f"{digest}.json", record)
         return result
 
-    def _evaluate(self, state: dict) -> ScreeningDecision:
+    def _review_summary(self, state: dict) -> dict:
+        summary = self.summarizer.summarize(state)
+        if summary.get("status") == "generated":
+            # Separate decision, no recursive summarization. A preview never changes the gate.
+            state = {"summary": summary["text"]}
+            references, reasons = inspect_urls(state)
+            if references or reasons:
+                check = ScreeningDecision(False, ["summary_contains_url"])
+            elif not self._key:
+                check = ScreeningDecision(False, ["missing_typesafe_key"])
+            else:
+                check = self._evaluate(state, questions=SUMMARY_QUESTIONS)
+            check.policy_version = SUMMARY_POLICY_VERSION
+            summary["screening"] = check.as_dict()
+            summary["status"] = "available" if check.approved else "withheld"
+            if not check.approved:
+                summary.pop("text", None)
+        return summary
+
+    def _evaluate(self, state: dict, *, questions: dict = QUESTIONS) -> ScreeningDecision:
         try:
             response = self.transport.post(
                 ENDPOINT,
                 headers={"Authorization": f"Bearer {self._key}"},
-                json={"model": MODEL, "state": state, "questions": QUESTIONS},
+                json={"model": MODEL, "state": state, "questions": questions},
                 timeout=(5, 30),
                 allow_redirects=False,
             )
@@ -89,7 +127,7 @@ class ReadScreener:
                 return ScreeningDecision(False, ["unexpected_model_version"])
             answers = payload["answers"]
             probabilities = {}
-            for name in QUESTIONS:
+            for name in questions:
                 answer = answers[name]
                 value = answer["noul"]
                 if (
@@ -127,7 +165,9 @@ def configured_screener(account: str | None, provider: str) -> ReadScreener | No
         if key_path.exists():
             key = key_path.read_text().strip()
     audit = path.parent / "screening-audit" / provider / name
-    return ReadScreener(key, audit_path=audit)
+    return ReadScreener(
+        key, audit_path=audit, summarizer=configured_summarizer(config, name, provider)
+    )
 
 
 def screened_result(result: dict[str, Any], decision: ScreeningDecision) -> dict[str, Any]:

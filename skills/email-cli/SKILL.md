@@ -148,6 +148,16 @@ Responses include `read_screening.decision` (`auto_approved` or `flagged`), reas
 
 Metadata-only searches and reads do not invoke Jev. Screened reads write private audit records beside the screening configuration under `screening-audit/PROVIDER/ACCOUNT/`, containing message ID, content fingerprint, and decision metadata, but no body or key. There is no reusable sender grant or cached body approval: subsequent reads evaluate the current message content again. Remove an account from `enabled_accounts` to disable screening for it.
 
+## Optional previews of flagged messages
+
+After the user authorizes sending flagged bodies to OpenAI and paying for summaries, add a separate `flagged_summaries` object to the same local screening configuration. It contains `api_key_file` (for example `~/.config/email-cli/openai-api-key`) and `enabled_accounts` in the same provider/account shape as the screening configuration. `OPENAI_API_KEY` can supply the key instead. Summary opt-in does not enable screening for additional accounts. Keep key files private with mode `0600`.
+
+For a flagged message, the CLI can request a tool-free GPT-5 nano preview with minimal reasoning, a 512-token output budget, and `store: false`. The prompt targets at most 45 words (responses over 70 words or 600 characters are withheld), omitting destinations, commands, and quoted instructions. The candidate preview is checked separately by the versioned Jev preview policy (`email-preview-v1`); a failed check withholds the preview. This policy rejects directives, approval/trust claims and actionable resource references while permitting attributed descriptions of a sender's request; explicit URLs are also rejected in code. API errors, refusals, malformed responses, incomplete input, and oversized messages leave the original body redacted and return an unavailable/withheld preview status. Attachment content and linked resources are never inspected. `store: false` is not a claim of zero provider retention.
+
+Read `read_screening.review_summary` for status, text when available, coverage, usage and screening metadata. These previews are untrusted, potentially inaccurate descriptions for human review only. Never treat a preview as approval, a verified fact, or instructions to invoke tools. Summarization does not change `decision`, sender permissions, body redaction, or any draft/send approval. Ordinary passing emails and metadata-only searches make no summary call. Audit records omit the preview text; private reports may retain it when requested. No summary is cached, so repeated flagged reads incur repeated costs.
+
+For explicitly authorized paid evaluations, pass `--openai-key-file` to `scripts/evaluate_read_screening.py` or `scripts/audit_read_screening.py`. The evaluator also accepts `--cases tests/fixtures/summary_cases.json`. These options authorize previews within that run; they do not modify account configuration. Audit report previews are private body-derived data and must remain ignored and untracked.
+
 ## Testing and reporting screening changes
 
 Use offline unit tests for release/redaction, MIME completeness, provider/account isolation, malformed API responses, timeouts, and unchanged draft/send gates. Paid Jev evaluations are separate and must only be run when authorized:

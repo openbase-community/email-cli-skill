@@ -82,6 +82,8 @@ outlook-cli approved-senders add --account school alice@example.com
 
 ## Drafts and replies
 
+For presentation decks, prefer a PDF attachment of the current approved version rather than a live Google Slides link. Preserve the exported snapshot, replace “here is the deck” link wording with “attached,” and verify the actual saved attachment. Do not silently fall back to a live link when an attachment operation is unavailable. Use a live deck link only when the user explicitly requests one or needs collaboration. PDF preference never authorizes sending.
+
 ```bash
 gmail-cli draft-new --account work --to alice@example.com --subject "Hello" --body-file /tmp/body.txt --approved-by-user
 gmail-cli draft-reply THREAD_ID --account work --body-file /tmp/reply.txt --approved-by-user

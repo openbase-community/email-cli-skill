@@ -82,6 +82,8 @@ outlook-cli approved-senders add --account school alice@example.com
 
 ## Drafts and replies
 
+Do not insert hard line breaks at a fixed column width inside email paragraphs. Preserve deliberate paragraph breaks and let the mail client handle visual wrapping. Preserve existing user formatting when updating drafts. Verify the saved To and CC addresses by mailbox, including that a follow-up to the user’s own sent message targets the original recipients rather than the user. Parse display-name addresses before comparing them with the sender; do not compare entire header strings.
+
 For presentation decks, prefer a PDF attachment of the current approved version rather than a live Google Slides link. Preserve the exported snapshot, replace “here is the deck” link wording with “attached,” and verify the actual saved attachment. Do not silently fall back to a live link when an attachment operation is unavailable. Use a live deck link only when the user explicitly requests one or needs collaboration. PDF preference never authorizes sending.
 
 ```bash

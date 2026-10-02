@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 from email.message import EmailMessage
-from email.utils import formatdate, make_msgid
+from email.utils import formataddr, formatdate, getaddresses, make_msgid
 from typing import Any
 
 from email_cli.parsing import choose_body_text, extract_headers, extract_payload_content
@@ -57,7 +57,7 @@ def build_reply_message(
     message = EmailMessage()
     message["From"] = sender
     message["To"] = _reply_to(original_from, original_to, sender, reply_all)
-    cc = _reply_cc(original_cc, sender, reply_all)
+    cc = _reply_cc(original_cc, sender, reply_all, exclude=str(message["To"]))
     if cc:
         message["Cc"] = cc
     message["Subject"] = subject if subject.lower().startswith("re:") else f"Re: {subject}"
@@ -115,30 +115,25 @@ def quote_text(body_text: str, date: str, sender: str) -> str:
 
 
 def _reply_to(original_from: str, original_to: str, sender: str, reply_all: bool) -> str:
-    if not reply_all:
-        return original_from
-    recipients = [original_from, original_to]
+    # A follow-up to our own sent message should go to its original recipients.
+    author = _dedupe_recipients([original_from], sender)
+    recipients = [author, original_to] if reply_all or not author else [author]
     return _dedupe_recipients(recipients, sender)
 
 
-def _reply_cc(original_cc: str, sender: str, reply_all: bool) -> str:
+def _reply_cc(original_cc: str, sender: str, reply_all: bool, *, exclude: str = "") -> str:
     if not reply_all or not original_cc:
         return ""
-    return _dedupe_recipients([original_cc], sender)
+    return _dedupe_recipients([original_cc], sender, exclude=exclude)
 
 
-def _dedupe_recipients(values: list[str], sender: str) -> str:
-    seen: set[str] = set()
+def _dedupe_recipients(values: list[str], sender: str, *, exclude: str = "") -> str:
+    seen = {address.casefold() for _, address in getaddresses([sender, exclude]) if address}
     recipients: list[str] = []
-    sender_lower = sender.lower()
-    for value in values:
-        for recipient in value.split(","):
-            recipient = recipient.strip()
-            if not recipient:
-                continue
-            key = recipient.lower()
-            if key == sender_lower or key in seen:
-                continue
-            seen.add(key)
-            recipients.append(recipient)
+    for name, address in getaddresses(values):
+        key = address.casefold()
+        if not address or key in seen:
+            continue
+        seen.add(key)
+        recipients.append(formataddr((name, address)))
     return ", ".join(recipients)

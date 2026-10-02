@@ -60,3 +60,73 @@ def test_build_reply_message_can_skip_visible_trail() -> None:
     )
 
     assert message.get_content().strip() == "Thursday works well for me."
+
+
+def with_recipients(sender: str, to: str, cc: str = "") -> dict:
+    original = original_message()
+    values = {"From": sender, "To": to, "Cc": cc}
+    for header in original["payload"]["headers"]:
+        if header["name"] in values:
+            header["value"] = values[header["name"]]
+    return original
+
+
+def test_reply_all_excludes_self_and_deduplicates_mailboxes_across_headers() -> None:
+    message = build_reply_message(
+        sender="casey@example.com",
+        original_message=with_recipients(
+            '"Lee, Jordan" <jordan@example.com>',
+            '"Morgan, Casey" <CASEY@example.com>, Jordan <JORDAN@example.com>',
+            'Casey <casey@example.com>, Jordan <jordan@example.com>, Jesse <jesse@example.com>',
+        ),
+        body_text="Following up.",
+        reply_all=True,
+    )
+
+    assert str(message["To"]) == '"Lee, Jordan" <jordan@example.com>'
+    assert str(message["Cc"]) == "Jesse <jesse@example.com>"
+
+
+def test_follow_up_to_own_message_targets_original_recipients() -> None:
+    original = with_recipients(
+        "Casey Morgan <casey@example.com>",
+        "Jordan <jordan@example.com>",
+        "Casey <casey@example.com>, Jesse <jesse@example.com>",
+    )
+    for reply_all in (False, True):
+        message = build_reply_message(
+            sender="casey@example.com",
+            original_message=original,
+            body_text="Following up.",
+            reply_all=reply_all,
+        )
+        assert str(message["To"]) == "Jordan <jordan@example.com>"
+        assert message["Cc"] == ("Jesse <jesse@example.com>" if reply_all else None)
+
+
+def test_direct_reply_to_incoming_message_only_targets_author() -> None:
+    message = build_reply_message(
+        sender="Casey Morgan <casey@example.com>",
+        original_message=with_recipients(
+            "Jordan <jordan@example.com>",
+            "Casey <casey@example.com>, Jesse <jesse@example.com>",
+        ),
+        body_text="Thanks.",
+    )
+    assert str(message["To"]) == "Jordan <jordan@example.com>"
+    assert message["Cc"] is None
+
+
+def test_reply_preserves_long_paragraphs_without_hard_wrapping() -> None:
+    from email import message_from_bytes, policy
+
+    paragraph = "A long paragraph should wrap visually in the email client. " * 8
+    body = f"Hi Jordan,\n\n{paragraph.rstrip()}\n\nBest,\nCasey"
+    message = build_reply_message(
+        sender="casey@example.com",
+        original_message=original_message(),
+        body_text=body,
+        include_quoted_history=False,
+    )
+    decoded = message_from_bytes(message.as_bytes(), policy=policy.default)
+    assert decoded.get_content().rstrip("\n") == body

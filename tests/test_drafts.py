@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import base64
+from email import message_from_bytes, policy
 
-from email_cli.drafts import build_reply_message
+from bs4 import BeautifulSoup
+
+from email_cli.drafts import build_new_message, build_reply_message
 
 
 def b64(value: str) -> str:
@@ -39,7 +42,7 @@ def test_build_reply_message_preserves_headers_and_visible_trail() -> None:
         reply_all=True,
     )
 
-    body = message.get_content()
+    body = message.get_body(preferencelist=("plain",)).get_content()
     assert message["Subject"] == "Re: Time to Connect"
     assert message["In-Reply-To"] == "<original@example.com>"
     assert message["References"] == "<root@example.com> <original@example.com>"
@@ -59,7 +62,8 @@ def test_build_reply_message_can_skip_visible_trail() -> None:
         include_quoted_history=False,
     )
 
-    assert message.get_content().strip() == "Thursday works well for me."
+    body = message.get_body(preferencelist=("plain",)).get_content()
+    assert body.strip() == "Thursday works well for me."
 
 
 def with_recipients(sender: str, to: str, cc: str = "") -> dict:
@@ -118,8 +122,6 @@ def test_direct_reply_to_incoming_message_only_targets_author() -> None:
 
 
 def test_reply_preserves_long_paragraphs_without_hard_wrapping() -> None:
-    from email import message_from_bytes, policy
-
     paragraph = "A long paragraph should wrap visually in the email client. " * 8
     body = f"Hi Jordan,\n\n{paragraph.rstrip()}\n\nBest,\nCasey"
     message = build_reply_message(
@@ -129,4 +131,47 @@ def test_reply_preserves_long_paragraphs_without_hard_wrapping() -> None:
         include_quoted_history=False,
     )
     decoded = message_from_bytes(message.as_bytes(), policy=policy.default)
-    assert decoded.get_content().rstrip("\n") == body
+    assert decoded.get_body(preferencelist=("plain",)).get_content().rstrip("\n") == body
+    assert_flowing_html(decoded, body)
+
+
+def assert_flowing_html(message, body: str) -> None:
+    html = message.get_body(preferencelist=("html",)).get_content()
+    soup = BeautifulSoup(html, "html.parser")
+    assert soup.find("pre") is None
+    assert soup.find("script") is None
+    assert soup.find(attrs={"style": True}) is None
+    for br in soup.find_all("br"):
+        br.replace_with("\n")
+    assert soup.div.get_text() == body.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def test_new_message_has_safe_flowing_html_and_plain_fallback_with_attachment() -> None:
+    paragraph = 'Long prose with <script>not markup</script> & "quotes". ' * 10
+    body = f"Hello,\r\n\r\n{paragraph.rstrip()}\r\n\r\nThanks,\r\nCasey"
+    message = build_new_message(
+        sender="casey@example.com",
+        to="jordan@example.com",
+        subject="Following up",
+        body_text=body,
+    )
+    message.add_attachment(b"test pdf", maintype="application", subtype="pdf", filename="deck.pdf")
+    decoded = message_from_bytes(message.as_bytes(), policy=policy.default)
+    assert decoded.get_content_type() == "multipart/mixed"
+    assert list(decoded.iter_parts())[0].get_content_type() == "multipart/alternative"
+    plain = decoded.get_body(preferencelist=("plain",)).get_content()
+    assert plain.rstrip("\n") == body.replace("\r\n", "\n")
+    assert_flowing_html(decoded, body)
+    assert next(decoded.iter_attachments()).get_payload(decode=True) == b"test pdf"
+
+
+def test_reply_html_preserves_intentional_breaks_and_quoted_trail_as_text() -> None:
+    message = build_reply_message(
+        sender="casey@example.com",
+        original_message=original_message(),
+        body_text="First paragraph.\n\nSecond paragraph.\nThanks,\nCasey",
+    )
+    decoded = message_from_bytes(message.as_bytes(), policy=policy.default)
+    body = decoded.get_body(preferencelist=("plain",)).get_content().rstrip("\n")
+    assert "> Here are a few times that work." in body
+    assert_flowing_html(decoded, body)

@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 from email.message import EmailMessage
 from email.utils import formataddr, formatdate, getaddresses, make_msgid
+from html import escape
 from typing import Any
 
 from email_cli.parsing import choose_body_text, extract_headers, extract_payload_content
@@ -12,6 +13,17 @@ from email_cli.parsing import choose_body_text, extract_headers, extract_payload
 
 def encode_message(message: EmailMessage) -> str:
     return base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")
+
+
+def _set_body(message: EmailMessage, body_text: str) -> None:
+    """Keep a plain fallback and a flowing HTML body for Gmail's composer."""
+    message.set_content(body_text)
+    # Plain-only drafts can acquire visible hard wraps after editing/sending in
+    # Gmail. HTML carries the intended breaks without fixing the display width.
+    # Treat every input character as text, never as caller-supplied HTML.
+    normalized = body_text.replace("\r\n", "\n").replace("\r", "\n")
+    html = '<div dir="ltr">' + escape(normalized).replace("\n", "<br>") + "</div>"
+    message.add_alternative(html, subtype="html")
 
 
 def build_new_message(
@@ -33,7 +45,7 @@ def build_new_message(
     message["Subject"] = subject
     message["Date"] = formatdate(localtime=True)
     message["Message-ID"] = make_msgid()
-    message.set_content(body_text)
+    _set_body(message, body_text)
     return message
 
 
@@ -66,7 +78,8 @@ def build_reply_message(
     if message_id:
         message["In-Reply-To"] = message_id
         message["References"] = f"{references} {message_id}".strip() if references else message_id
-    message.set_content(
+    _set_body(
+        message,
         build_reply_body(
             body_text=body_text,
             original_message=original_message,

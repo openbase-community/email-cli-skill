@@ -14,6 +14,7 @@ from email_cli.parsing import (
     normalize_message,
     normalize_thread,
 )
+from email_cli.prior_recipients import GmailPriorRecipients, single_sender
 from email_cli.read_screening import screened_result
 from email_cli.safety import require_confirmation
 from email_cli.scopes import GMAIL_COMPOSE_SCOPE, GMAIL_SEND_SCOPE
@@ -30,12 +31,16 @@ class GmailClient:
         user_id: str = "me",
         approved_senders: ApprovedSenders | None = None,
         read_screener=None,
+        allow_previous_recipients: bool = False,
     ):
         self.service = service
         self.credentials = credentials
         self.user_id = user_id
         self.approved_senders = approved_senders
         self.read_screener = read_screener
+        self.prior_recipients = (
+            GmailPriorRecipients(service, user_id) if allow_previous_recipients else None
+        )
 
     def search_messages(
         self,
@@ -121,6 +126,24 @@ class GmailClient:
                 max_body_chars=max_body_chars,
                 approved_senders=self.approved_senders,
             )
+        if include_body and self.prior_recipients:
+            evidence = self.prior_recipients.evidence_for(metadata)
+            if evidence:
+                response = self._get_message(message_id=metadata["id"], message_format="full")
+                if (
+                    response.get("id") != metadata["id"]
+                    or single_sender(response) != single_sender(metadata)
+                ):
+                    raise PermissionError("Message identity changed; body access refused.")
+                result = normalize_message(
+                    response, include_body=True, max_body_chars=max_body_chars
+                )
+                result["sender_approved"] = False
+                result["read_access"] = {
+                    "basis": "previous_recipient",
+                    "sent_message_id": evidence,
+                }
+                return result
         if include_body and self.read_screener:
             response = self._get_message(message_id=metadata["id"], message_format="full")
             if response.get("id") != metadata.get("id"):

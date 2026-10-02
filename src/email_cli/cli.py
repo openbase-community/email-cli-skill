@@ -26,6 +26,7 @@ from email_cli.auth import (
 )
 from email_cli.cli_parser import build_parser
 from email_cli.client import GmailClient
+from email_cli.prior_recipients import previous_recipient_reads_enabled
 from email_cli.provider_paths import PROVIDER_NAMES
 from email_cli.read_screening import configured_screener
 from email_cli.scopes import (
@@ -272,6 +273,7 @@ def configured_client(account: str | None = None, provider: str = "gmail"):
         credentials=creds,
         approved_senders=load_approved_senders(account=account),
         read_screener=configured_screener(account, provider),
+        allow_previous_recipients=previous_recipient_reads_enabled(account),
     )
 
 

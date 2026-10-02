@@ -2,7 +2,7 @@
 name: email-cli
 description: >-
   Use this skill for Gmail, Outlook/Microsoft 365, or Apple Mail email through the local CLI: authentication, search, message and thread reading, approved senders, draft creation, replies, and sending.
-version: 0.5.0
+version: 0.5.1
 ---
 
 # Email CLI
@@ -17,8 +17,16 @@ Use the Email CLI for Gmail, Outlook/Microsoft 365, and Apple Mail with Openbase
 4. The user must manually approve or decline that request at `http://localhost:7999/dashboard/approvals`.
 5. Rerun the same command only after the user says they approved it in the dashboard. Do not rerun a declined request.
 6. Never mutate Openbase Coder approval state yourself. Do not edit request/decision files, call internal approval-state APIs, insert decisions, mark requests accepted, or otherwise simulate dashboard approval.
-7. Do not use `--approved-by-user` unless the user explicitly asks to bypass the dashboard mechanism.
-8. Do not send drafts, create drafts, or change approved senders without approval. A Jev read decision grants none of these write permissions.
+7. Creating or editing an unsent email draft within the user’s requested task does not need a separate approval prompt or dashboard round trip. For draft-only commands, use `--approved-by-user` when supported without requesting confirmation again. For every other action, do not use this flag unless the user explicitly authorizes bypassing the dashboard for that action.
+8. Sending drafts and changing approved senders still require separate approval. Draft permission never authorizes sending, scheduling delivery, or sender-permission changes. A Jev read decision grants no write permissions.
+
+## Standing authorization for unsent drafts
+
+Creating and editing unsent email drafts is permitted within the user’s requested task without an additional approval prompt or dashboard round trip. This includes private drafts in Gmail or another configured email provider, not just local text files. When a draft is requested or is part of the authorized task, finish the draft and save it directly using the supported draft-only command with `--approved-by-user`. Do not create a dashboard request first, and do not ask for the same permission again. Honor any narrower user instruction, such as “local drafts only.”
+
+Use the existing draft-command bypass only for authorized draft work. This does not permit editing approval state, weakening the CLI’s approval mechanism, or bypassing send approval. Never reuse draft authorization for `send-draft`, scheduled delivery, or changes to approved senders. If a provider lacks a supported draft-only bypass, report the limitation instead of modifying approval files or falsely claiming the draft was saved.
+
+Verify the saved draft’s recipients, content, and thread, and report it as drafted, never sent. Before retrying an interrupted draft mutation, inspect Drafts to avoid duplicates.
 
 ## Install and authenticate
 
@@ -75,25 +83,25 @@ outlook-cli approved-senders add --account school alice@example.com
 ## Drafts and replies
 
 ```bash
-gmail-cli draft-new --account work --to alice@example.com --subject "Hello" --body-file /tmp/body.txt
-gmail-cli draft-reply THREAD_ID --account work --body-file /tmp/reply.txt
+gmail-cli draft-new --account work --to alice@example.com --subject "Hello" --body-file /tmp/body.txt --approved-by-user
+gmail-cli draft-reply THREAD_ID --account work --body-file /tmp/reply.txt --approved-by-user
 gmail-cli send-draft DRAFT_ID --account work
 
-outlook-cli draft-new --account school --to alice@example.com --subject "Hello" --body-file /tmp/body.txt
-outlook-cli draft-reply CONVERSATION_ID --account school --body-file /tmp/reply.txt
-outlook-cli draft-reply CONVERSATION_ID --account school --reply-all --body-file /tmp/reply.txt
+outlook-cli draft-new --account school --to alice@example.com --subject "Hello" --body-file /tmp/body.txt --approved-by-user
+outlook-cli draft-reply CONVERSATION_ID --account school --body-file /tmp/reply.txt --approved-by-user
+outlook-cli draft-reply CONVERSATION_ID --account school --reply-all --body-file /tmp/reply.txt --approved-by-user
 outlook-cli send-draft DRAFT_ID --account school
 ```
 
 Use `draft-reply` for replies. Gmail preserves the thread ID/reply headers; Outlook uses native createReply/createReplyAll and verifies conversation membership. Both include the visible quoted trail by default unless `--no-quoted-history` is explicitly passed. Outlook replies target the latest non-draft message, and its sender must be approved before quoting. After creation, verify the returned `thread_id` and tell the user that the trail was included. Outlook also returns `quoted_history_included`.
 
-All draft/send commands require approval. Outlook sending requires an existing draft and returns `send_status: "accepted"`; do not claim delivery from that alone. No automatic write retries occur. After an interrupted or timed-out write, check Drafts/Sent before retrying to avoid duplicates.
+Create/edit draft commands use the standing draft authorization above; send commands require separate approval. Outlook sending requires an existing draft and returns `send_status: "accepted"`; do not claim delivery from that alone. No automatic write retries occur. After an interrupted or timed-out write, check Drafts/Sent before retrying to avoid duplicates.
 
 ## Approval contract
 
 An unapproved action exits 2 and prints `status`, `approval.action`, `approval.prompt`, `approval.details`, `approval.dashboard_url`, and `rerun_after_approval`. The shared dashboard request ID includes provider/account details; draft creation also binds the complete body by SHA-256, not only the displayed preview.
 
-Manual user approval is required: only the user may click approve or decline in the dashboard. Do not edit files under `~/.super-agents`, forge/backfill decisions, or call internal acceptance APIs. Run the CLI to create a request, notify the user, and rerun only after they confirm manual approval.
+For actions without applicable standing authorization, manual user approval is required: only the user may click approve or decline in the dashboard. Do not edit files under `~/.super-agents`, forge/backfill decisions, or call internal acceptance APIs. Run the CLI to create a request, notify the user, and rerun only after they confirm manual approval.
 
 ## Configuration
 
@@ -107,7 +115,7 @@ This CLI covers email. It does not provide Outlook calendar operations. Consult 
 
 Use `apple-mail-cli` or `gmail-cli --provider apple-mail` for accounts already configured in Apple's Mail app. Run `auth accounts` to discover enabled accounts, then `auth login --account school --username user@school.edu` to bind a CLI alias. Mail handles OAuth and syncing; do not extract credentials or impersonate Apple's OAuth app. The calling terminal/app may need macOS Automation permission to control Mail.
 
-Start with read-only mode. `--include-compose` and `--include-send` enable local CLI capabilities; these flags do not narrow the underlying permissions granted to Mail. All draft, send, and approved-sender changes retain the dashboard workflow above. Sender permissions are isolated under the `apple-mail` provider and never inherited from Gmail or Graph/Outlook.
+Start with read-only mode. `--include-compose` and `--include-send` enable local CLI capabilities; these flags do not narrow the underlying permissions granted to Mail. Unsent draft creation and editing use the standing draft authorization above. Sending and approved-sender changes retain their separate approval workflow. Sender permissions are isolated under the `apple-mail` provider and never inherited from Gmail or Graph/Outlook.
 
 `folders`, `search`, and `message` work through Mail's locally synced data. Search defaults to the mailbox named `Inbox`; use a folder ID for other or localized mailboxes. Only `from:`, `subject:`, and plain sender/subject text are supported, all combined with AND. There is no body search. Each page scans at most 250 local messages; continue with `next_page_token` even after an empty page. Preserve query, folder, and result limit. Mailbox changes can shift page offsets; search again after moving a message. Never claim local results cover all server mail unless sync completeness was independently established.
 
